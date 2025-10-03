@@ -1,0 +1,4 @@
+pests:
+  whitefly_warn: 10
+  thrips_warn: 5
+  tuta_warn: 1

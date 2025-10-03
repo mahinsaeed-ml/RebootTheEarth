@@ -1,0 +1,5 @@
+train: C:/ai-greenhouse-qatar/datasets/pests/images/val
+val: C:/ai-greenhouse-qatar/datasets/pests/images/val
+
+nc: 1
+names: ['whitefly']

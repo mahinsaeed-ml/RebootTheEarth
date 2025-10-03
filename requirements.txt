@@ -1,0 +1,11 @@
+fastapi
+uvicorn[standard]
+requests
+pydantic
+python-dotenv
+streamlit
+Pillow
+twilio
+pyyaml
+opencv-python
+ultralytics
