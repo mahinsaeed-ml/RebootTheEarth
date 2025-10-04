@@ -4,27 +4,39 @@ import os
 
 
 class PestDetector:
-    def __init__(self, model_path=None):
-        # Default to your trained model if available
+    def __init__(self, model_path=None):  # <-- fixed here
         if model_path is None:
-            model_path = os.path.join("models", "whitefly.pt")  # update if stored elsewhere
+            model_path = os.path.join("models", "whitefly.pt")
         self.model = YOLO(model_path)
 
     def detect(self, image_file):
-        # Run detection
-        results = self.model.predict(image_file, save=True, imgsz=640)
+        # Run YOLO prediction
+        results = self.model.predict(
+            source=image_file,
+            save=True,          # saves annotated image
+            save_txt=False,     # disable YOLO txt outputs if not needed
+            imgsz=640,
+            conf=0.25           # adjust confidence threshold if needed
+        )
 
-        # Initialize counts
-        counts = {"whitefly": 0, "thrips": 0, "tuta_miner_traces": 0}
+        counts = {
+            "whitefly": 0,
+            "thrips": 0,
+            "tuta_miner_traces": 0
+        }
 
-        # Go through detected classes
+        # Loop through detections
         for d in results[0].boxes.cls.tolist():
-            label = self.model.names[int(d)]
-            if label.lower() in ["whitefly", "white_fly"]:  # handle naming in your dataset
+            label = self.model.names[int(d)].lower().strip()
+            if label == "whitefly":
                 counts["whitefly"] += 1
 
-        # Simulate detections for other pests
+        # Simulate other pests
         counts["thrips"] = random.randint(0, 2)
         counts["tuta_miner_traces"] = random.randint(0, 1)
+
+        # Get path of YOLO's saved annotated image
+        saved_path = results[0].save_dir
+        print(f"Annotated image saved at: {saved_path}")
 
         return counts

@@ -32,7 +32,8 @@ def health():
     return {"ok": True}
 
 @app.get("/forecast")
-def forecast(hours: int = 24):
+def forecast(hours: int = 6):
+    weather = OpenMeteoProvider(lat=25.3, lon=51.5)  # Doha coords
     return {"hourly": weather.get_hourly_forecast(hours)}
 
 @app.post("/pests")
@@ -43,10 +44,57 @@ async def detect_pests(file: UploadFile = File(...)):
     counts = detector.detect(tmp)
     return {"counts": counts}
 
+from backend.notifier import SMSNotifier
+import os
+
+notifier = SMSNotifier()
+
 @app.post("/analyze")
-def analyze(sensors: SensorPayload, pests: PestPayload, dust_index: float = 0.2):
-    forecast = weather.get_hourly_forecast(24)
-    current = {"temp_c": sensors.temp_c, "rh_pct": sensors.rh_pct}
-    risk = summarize_stress(current, forecast, dust_index)
-    actions = actions_from_signals(pests.dict(), {}, risk, CFG)
-    return {"risk": risk, "actions": actions}
+def analyze(payload: dict):
+    sensors = payload.get("sensors", {})
+    pests = payload.get("pests", {})
+
+    # use new method
+    forecast = weather.get_hourly_forecast(hours=24)
+
+    temp = sensors.get("temp_c")
+    rh = sensors.get("rh_pct")
+
+    # Calculate VPD (simplified)
+    vpd_band = "normal"
+    if temp and rh:
+        vpd = (1 - rh / 100) * (0.6108 * 2.718 ** ((17.27 * temp) / (temp + 237.3)))
+        if vpd > 2.0:
+            vpd_band = "high"
+        elif vpd < 0.5:
+            vpd_band = "low"
+
+    # --- ALERT LOGIC ---
+    alerts = []
+
+    # Pest thresholds
+    if pests.get("whitefly", 0) > 5:
+        alerts.append(f"🪰 Whitefly infestation detected: {pests['whitefly']} flies")
+    if pests.get("thrips", 0) > 5:
+        alerts.append(f"🪲 Thrips population high: {pests['thrips']}")
+    if pests.get("tuta_miner_traces", 0) > 0:
+        alerts.append("🍅 Tuta miner traces found on tomato leaves")
+
+    # Climate thresholds
+    if vpd_band == "high":
+        alerts.append(f"⚠️ High VPD detected at {temp}°C / {rh}% RH. Increase humidity or cooling.")
+    elif vpd_band == "low":
+        alerts.append(f"⚠️ Low VPD detected at {temp}°C / {rh}% RH. Improve ventilation.")
+
+    # Send SMS (batch into one message)
+    if alerts:
+        message = " | ".join(alerts)
+        notifier.send_sms("+97450608769", message)
+
+    return {
+        "risk": {"vpd_band": vpd_band},
+        "forecast": forecast,
+        "pests": pests,
+        "alerts": alerts
+    }
+

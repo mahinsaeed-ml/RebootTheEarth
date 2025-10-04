@@ -5,11 +5,13 @@ try:
 except ImportError:
     Client = None
 
+
 class SMSNotifier:
     def __init__(self):
-        self.sid = os.getenv("")
-        self.auth = os.getenv("")
-        self.from_number = os.getenv("")
+        # Correctly read environment variables by NAME
+        self.sid = os.getenv("AC85a586e193735e8bb20b4771bc3dee3e")
+        self.auth = os.getenv("d80f11820f7cb297f543ed669cdc04ef")
+        self.from_number = os.getenv("+97466187079")
 
         # Only enable Twilio if creds exist
         if self.sid and self.auth and self.from_number and Client:

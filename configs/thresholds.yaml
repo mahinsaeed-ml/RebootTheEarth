@@ -1,4 +1,5 @@
 pests:
-  whitefly_warn: 10
-  thrips_warn: 5
-  tuta_warn: 1
+  whitefly: 5
+  thrips: 5
+  tuta_miner_traces: 0
+
