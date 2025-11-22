@@ -1,6 +1,6 @@
 fastapi
-uvicorn[standard]
-requests
+uvicorn
+python-multipart
 pydantic
 python-dotenv
 streamlit
@@ -9,3 +9,8 @@ twilio
 pyyaml
 opencv-python
 ultralytics
+fastapi
+uvicorn
+python-multipart
+
+
